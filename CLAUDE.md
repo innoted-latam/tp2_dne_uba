@@ -143,16 +143,28 @@ siempre la clase mayoritaria).** Diagnóstico: con ResNet50 congelada como
 extractor de features fijo, el modelo no encuentra señal fuerte para
 memorabilidad, independientemente de cuántos frames o cuánto se regularice.
 
-## Punto de decisión pendiente (donde quedó la sesión)
+## Punto de decisión (revisado)
 
-Dos caminos abiertos, sin decidir aún:
-1. **Fine-tuning de ResNet50** (descongelar últimas capas) — más riesgo de
-   overfitting con dataset chico, pero podría captar features más
-   específicas del dominio (frames de películas vs ImageNet genérico).
-2. **Aceptar resultados actuales y pasar a Bloque 17 (conclusiones)** —
-   documentar honestamente las limitaciones (dataset chico, un solo
-   extractor de features, frames muy similares entre sí dentro de una
-   secuencia) y cerrar el TP.
+Ver `PLAN_MEJORA.md` para el análisis completo. Resumen:
+
+**Hallazgo central de la revisión:** el test tiene solo 132 secuencias, lo
+que da un IC 95% de ±8.5 puntos sobre accuracy. Los cuatro experimentos
+(0.53 / 0.54 / 0.57 / 0.58) son **estadísticamente indistinguibles entre sí**
+(diferencia máxima: z = 0.82, p ≈ 0.41) y todos tienen al baseline 0.561
+dentro de su intervalo. Las conclusiones intermedias que se venían sacando
+("augmentation mejoró", "early stopping empeoró", "4 frames es lo mejor")
+estaban leyendo ruido de muestreo. **Antes de probar modelos nuevos hay que
+arreglar la medición.**
+
+Orden de trabajo acordado (bloques 17+):
+A. Precomputar embeddings de ResNet50 (backbone congelado ⇒ features fijos).
+B. Validación cruzada 5-fold sobre las 660 secuencias + métrica ROC-AUC.
+C. Regresión sobre `memorability_score` + umbral calibrado (y Spearman).
+D. Agregar los 4 frames en el espacio de features, no de predicciones.
+E. Verificar/evitar fuga por película (`sequence_name` incluye el film).
+F. Comparar backbones (ResNet50 / EfficientNetB0 / MobileNetV2).
+G. Fine-tuning del último bloque conv (último recurso).
+H. GradCAM + conclusiones (requeridos por la consigna).
 
 Bloques restantes del plan original (11 bloques definidos al inicio, ahora
 ampliados a ~17 por las iteraciones): falta cerrar con GradCAM
