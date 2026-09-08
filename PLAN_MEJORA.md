@@ -159,3 +159,26 @@ videos. Spearman 0.207 con 98 películas es proporcionado.
   cubrir la pregunta "¿probaste otro backbone?". No se espera que cambie nada.
 - **Descartado: fine-tuning.** Con ~98 unidades independientes el overfitting
   es casi seguro. Se argumenta en las conclusiones, no se prueba.
+
+---
+
+# Estado final (bloques 17g-19)
+
+| Bloque | Qué | Resultado |
+|---|---|---|
+| 17g | EfficientNetB0 como extractor, mismo pipeline | AUC 0.594 / Spearman 0.190 (vs ResNet50: 0.593 / 0.207) |
+| 18 | GradCAM sobre el modelo del bloque 12 | Los mapas se encienden sobre luminancia y contraste, no sobre contenido semántico. Acierta 1 de 4 ejemplos; predicciones comprimidas entre 0.21 y 0.60 |
+| 19 | Tabla comparativa final + conclusiones | — |
+
+**Modelo final:** Ridge sobre embeddings de ResNet50 congelada, agregados por
+secuencia, evaluado con `GroupKFold` agrupado por película.
+**ROC-AUC 0.593, Spearman 0.207.**
+
+Que dos backbones distintos (ResNet50 y EfficientNetB0) topen en el mismo AUC
+es la evidencia más fuerte de que el cuello de botella son los datos (~98
+películas independientes) y no la arquitectura. Junto con GradCAM —que muestra
+al modelo respondiendo a propiedades fotométricas de bajo nivel— cierra el
+argumento para descartar el fine-tuning.
+
+TP cerrado. El notebook (`tp2_dne_uba.ipynb`, 98 celdas con outputs) está en
+este repo.
