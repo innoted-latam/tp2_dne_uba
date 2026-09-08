@@ -145,7 +145,7 @@ memorabilidad, independientemente de cuántos frames o cuánto se regularice.
 
 ## Punto de decisión (revisado)
 
-Ver `PLAN_MEJORA.md` para el análisis completo. Resumen:
+Ver `PLAN_MEJORA.md` — incluye los resultados ya ejecutados de los bloques 17a-17f. Resumen:
 
 **Hallazgo central de la revisión:** el test tiene solo 132 secuencias, lo
 que da un IC 95% de ±8.5 puntos sobre accuracy. Los cuatro experimentos

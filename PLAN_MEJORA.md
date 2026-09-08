@@ -96,3 +96,66 @@ es **matemáticamente idéntica** a la `Dense(1, sigmoid)` que ya se venía
 usando: mismo modelo, distinta implementación. `scikit-learn` se usa solo
 para que la validación cruzada sea una línea de código. Si se prefiere,
 la misma cabeza se puede escribir en Keras sin cambiar nada del resultado.
+
+
+---
+
+# Resultados de la ejecución (bloques 17a-17f)
+
+## Lo que se ejecutó
+
+| Bloque | Qué | Resultado |
+|---|---|---|
+| 17a | Embeddings ResNet50 (`pooling='avg'`) de los 2640 frames | matriz 2640 × 2048 |
+| 17b | Promedio por secuencia + labels | 660 × 2048, baseline 0.561 |
+| 17c | 5-fold CV, regresión logística (`C=0.01`) | acc 0.579 ± 0.022 — **AUC 0.601 ± 0.028** |
+| 17d | Conteo de películas en `sequence_name` | **98 películas**, ~7 secuencias cada una |
+| 17e | Mismo modelo, `StratifiedGroupKFold` por película | acc 0.541 ± 0.037 — **AUC 0.548 ± 0.041** |
+| 17f | Regresión (Ridge, `alpha=1000`) vs clasificación, `GroupKFold` | clasif. AUC 0.574 / Spearman 0.163 — **regr. AUC 0.593 / Spearman 0.207** |
+
+## Análisis
+
+**1. La fuga por película valía entre 3 y 5 puntos de AUC.** 0.601 sin agrupar
+vs 0.548 agrupado sugiere 5.3 puntos, pero la misma clasificación agrupada dio
+0.574 con otro splitter (`GroupKFold` en vez de `StratifiedGroupKFold`). El
+número agrupado se mueve entre 0.548 y 0.574 según el particionado: la fuga es
+real y grande —aproximadamente la mitad de la señal aparente— pero su magnitud
+exacta tiene una barra de error que estos datos no permiten achicar.
+
+**2. La regresión sobre el score continuo gana poco pero gana en ambas
+métricas** (+0.019 AUC, +0.044 Spearman, mismo splitter). La coincidencia de
+dirección en dos métricas es lo que le da credibilidad. **No se testeó
+significancia**: haría falta comparación pareada fold a fold. Es "consistente",
+no "probado".
+
+**3. Accuracy por debajo del baseline con AUC por encima del azar** (0.541 vs
+0.561, y 0.548 vs 0.500) no es contradictorio: es umbral mal calibrado. El
+modelo ordena algo mejor que el azar, pero cortar en 0.5 rinde peor que
+predecir siempre la clase mayoritaria. Confirma que accuracy nunca debió ser
+la métrica principal.
+
+**4. El desvío entre folds creció de ±0.028 a ±0.041 al agrupar.** Cada fold
+pasa de 132 secuencias sueltas a ~20 películas: menos unidades efectivas,
+estimación más ruidosa. De acá en adelante solo son detectables mejoras de
+varios puntos.
+
+**5. Hallazgo de fondo: el tamaño efectivo del dataset no es 660, es ~98.**
+Las 7 secuencias de una misma película no son observaciones independientes.
+Esto explica el techo mejor que cualquier detalle de arquitectura, y explica
+por qué ninguno de los experimentos de los bloques 7-16 movía la aguja.
+
+Contexto: el desafío MediaEval original alcanza Spearman ~0.5 con 8.000-10.000
+videos. Spearman 0.207 con 98 películas es proporcionado.
+
+## Cierre recomendado
+
+- **Bloque 18 — GradCAM** (requerido por la consigna). Necesita un modelo Keras
+  con la CNN adentro; usar el del bloque 12, no el Ridge sobre embeddings.
+- **Bloque 19 — tabla final y conclusiones.** El eje del informe no es el AUC
+  alcanzado sino que los resultados previos estaban inflados por dos sesgos
+  independientes (test chico, fuga por película), invisibles sin cambiar el
+  esquema de evaluación.
+- **Bloque 17g (opcional)** — comparar `EfficientNetB0` como extractor, para
+  cubrir la pregunta "¿probaste otro backbone?". No se espera que cambie nada.
+- **Descartado: fine-tuning.** Con ~98 unidades independientes el overfitting
+  es casi seguro. Se argumenta en las conclusiones, no se prueba.
